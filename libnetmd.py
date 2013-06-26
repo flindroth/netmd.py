@@ -319,8 +319,11 @@ class NetMDInterface(object):
 
     def send_query(self, query, test=False):
         # XXX: to be removed (replaced by 2 separate calls)
+        print "Sending query: %s" % query
         self.sendCommand(query, test=test)
-        return self.readReply()
+        reply = self.readReply()
+        print "Reply: %s" % reply
+        return reply 
 
     def sendCommand(self, query, test=False):
         if test:
