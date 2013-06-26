@@ -344,6 +344,7 @@ class NetMDInterface(object):
         return result[1:]
 
     def formatQuery(self, format, *args):
+        print "formatQuery: format=%s" % format
         result = []
         append = result.append
         extend = result.extend
@@ -386,6 +387,7 @@ class NetMDInterface(object):
                 hexAppend(half + char)
                 half = None
         assert len(arg_stack) == 0
+        print "Result: %s" % result
         return result
 
     def scanQuery(self, query, format):
