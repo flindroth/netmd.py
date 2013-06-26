@@ -331,6 +331,7 @@ class NetMDInterface(object):
         else:
             query = [STATUS_CONTROL, ] + query
         binquery = ''.join(chr(x) for x in query)
+        print "Binary query: %s" % list(bytearray(binquery))
         self.net_md.sendCommand(binquery)
 
     def readReply(self):
