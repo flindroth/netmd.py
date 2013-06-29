@@ -9,41 +9,19 @@ from Crypto.Cipher import DES
 
 packetsize = 2048
 
+def download(filename,title,wireformat=libnetmd.WIREFORMAT_PCM,bus=None,device_address=None):
 
-# USAGE
-#######
-# first: create an uncompressed 16-bit stereo PCM:
-# ffmpeg -i $audiofile -f s16be test.raw
-#######
-# plug in your NetMD using USB and use this script accordingly (title is optional):
-# sudo python downloadhack.py --filename ~/music/test.raw --title songtitle
 
-from optparse import OptionParser
-parser = OptionParser()
-parser.add_option('-b', '--bus')
-parser.add_option('-d', '--device')
-parser.add_option('-f', '--filename')
-parser.add_option('-F', '--format')
-parser.add_option('-t', '--title')
-(options, args) = parser.parse_args()
-assert len(args) < 4
-filename=options.filename
-informat=options.format
-
-if informat == '':
-    informat = 'PCM'
-
-if options.title != None:
-    title=options.title
-else:
-    title="no title"
-
-def main(bus=None, device_address=None):
+    print "Download request received for file %s and title %s" % (filename,title)
     context = usb1.LibUSBContext()
     for md in libnetmd.iterdevices(context, bus=bus,
                                    device_address=device_address):
         md_iface = libnetmd.NetMDInterface(md)
-        DownloadHack(md_iface)
+
+        mdtrack = MDTrack(filename,title,wireformat)
+        DownloadHack(md_iface,mdtrack)
+
+
 
 class EKBopensource:
     def getRootKey(self):
@@ -58,38 +36,41 @@ class EKBopensource:
                 "\x8f\x2b\xc3\x52\xe8\x6c\x5e\xd3\x06\xdc\xae\x18\xd2\xf3\x8c\x7f\x89\xb5\xe1\x85\x55\xa1\x05\xea")
 
 
-if informat == 'LP2':
-    framecount=int(os.path.getsize(filename)/192)
-    framesize=192
-else:
-    framecount=int(os.path.getsize(filename)/2048)
-    framesize=2048
-
-
-misalignment = os.path.getsize(filename) % 8
-
-if misalignment != 0:
-    framecount = framecount - 1
-
-print("Frame count: " + str(framecount))
-
-
 
 #framecount=int(os.path.getsize(filename)/192)
 
 
 class MDTrack:
+    def __init__(self, filename, title, wireformat):
+        self.filename = filename
+        self.title = title
+        self.setDataFormat(wireformat)
+
     def getTitle(self):
-        return title
+        return self.title
+    
+	def setTitle(self,title):
+	    self.title = title
 
     def getFramecount(self):
+        filesize = os.path.getsize(self.filename)
+        framecount = filesize/self.framesize
+		
+        misalignment = filesize % 8
+        if misalignment != 0:
+            framecount = framecount - 1
+		
         return framecount
 
     def getDataFormat(self):
-        if informat == 'LP2':
-            return libnetmd.WIREFORMAT_LP2
-        else:
-            return libnetmd.WIREFORMAT_PCM
+		return self.dataformat
+
+    def setDataFormat(self,dataformat):
+        self.dataformat = dataformat
+        if dataformat == libnetmd.WIREFORMAT_PCM:
+            self.framesize = 2048
+        elif dataformat == libnetmd.WIREFORMAT_LP2:
+            self.framesize = 192
 
     def getContentID(self):
         # value probably doesn't matter
@@ -102,7 +83,7 @@ class MDTrack:
     def getPacketcount(self):
         #return framecount/packetsize
         #return (framecount+packetsize // 2) // packetsize
-        numpackets = int(math.ceil(float(framecount)/packetsize))
+        numpackets = int(math.ceil(float(self.getFramecount())/packetsize))
         print("Number of packets: %s" % numpackets)
         return numpackets
 
@@ -113,24 +94,24 @@ class MDTrack:
         keycrypter = DES.new(self.getKEK(), DES.MODE_ECB)
         key = keycrypter.encrypt(datakey)
         datacrypter = DES.new(key, DES.MODE_CBC, firstiv)
-        file = open(filename)
+        file = open(self.filename)
         #file.read(60)
         packets = []
         data = None
-        framesremaining = framecount
+        framesremaining = self.getFramecount()
         for i in range(0,self.getPacketcount()):
             print("Processing packet %s" % str(i))
             if framesremaining < packetsize:
-                data = file.read(framesremaining*framesize)
+                data = file.read(framesremaining*self.framesize)
             else:
-                data = file.read(packetsize*framesize)
+                data = file.read(packetsize*self.framesize)
                 framesremaining = framesremaining - packetsize
             print("Read length %s" % str(len(data)))
             packets.append((datakey,firstiv,datacrypter.encrypt(data)))
 
         return packets 
 
-def DownloadHack(md_iface):
+def DownloadHack(md_iface,trk):
     try:
         md_iface.sessionKeyForget()
         md_iface.leaveSecureSession()
@@ -140,7 +121,6 @@ def DownloadHack(md_iface):
         md_iface.disableNewTrackProtection(1)
     except libnetmd.NetMDNotImplemented:
         print("Can't set device to non-protecting")
-    trk = MDTrack()
     print("MDTrack framecount: " + str(trk.getFramecount()))
     md_session = libnetmd.MDSession(md_iface, EKBopensource())
 
@@ -151,6 +131,6 @@ def DownloadHack(md_iface):
     print("Confirmed Content ID:",''.join(["%02x"%ord(i) for i in ccid]))
     md_session.close()
 
-if __name__ == '__main__':
-    main(bus=options.bus, device_address=options.device)
+
+
 
