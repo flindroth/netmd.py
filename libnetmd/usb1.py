@@ -862,7 +862,6 @@ class USBDeviceHandle(object):
         endpoint = (endpoint & ~libusb1.USB_ENDPOINT_DIR_MASK) | \
                     libusb1.LIBUSB_ENDPOINT_OUT
         data = create_binary_buffer(data)
-        print "Endpoint: " + str(endpoint)
         return self._bulkTransfer(endpoint, data, sizeof(data), timeout)
 
     def bulkRead(self, endpoint, length, timeout=0):

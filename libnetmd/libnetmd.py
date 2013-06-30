@@ -319,11 +319,8 @@ class NetMDInterface(object):
 
     def send_query(self, query, test=False):
         # XXX: to be removed (replaced by 2 separate calls)
-        print "Sending query: %s" % query
         self.sendCommand(query, test=test)
-        reply = self.readReply()
-        print "Reply: %s" % reply
-        return reply 
+        return self.readReply()
 
     def sendCommand(self, query, test=False):
         if test:
@@ -331,7 +328,6 @@ class NetMDInterface(object):
         else:
             query = [STATUS_CONTROL, ] + query
         binquery = ''.join(chr(x) for x in query)
-        print "Binary query: %s" % list(bytearray(binquery))
         self.net_md.sendCommand(binquery)
 
     def readReply(self):
@@ -348,7 +344,6 @@ class NetMDInterface(object):
         return result[1:]
 
     def formatQuery(self, format, *args):
-        print "formatQuery: format=%s" % format
         result = []
         append = result.append
         extend = result.extend
@@ -391,7 +386,6 @@ class NetMDInterface(object):
                 hexAppend(half + char)
                 half = None
         assert len(arg_stack) == 0
-        print "Result: %s" % result
         return result
 
     def scanQuery(self, query, format):

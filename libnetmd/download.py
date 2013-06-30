@@ -100,13 +100,11 @@ class MDTrack:
         data = None
         framesremaining = self.getFramecount()
         for i in range(0,self.getPacketcount()):
-            print("Processing packet %s" % str(i))
             if framesremaining < packetsize:
                 data = file.read(framesremaining*self.framesize)
             else:
                 data = file.read(packetsize*self.framesize)
                 framesremaining = framesremaining - packetsize
-            print("Read length %s" % str(len(data)))
             packets.append((datakey,firstiv,datacrypter.encrypt(data)))
 
         return packets 
@@ -121,7 +119,6 @@ def DownloadHack(md_iface,trk):
         md_iface.disableNewTrackProtection(1)
     except libnetmd.NetMDNotImplemented:
         print("Can't set device to non-protecting")
-    print("MDTrack framecount: " + str(trk.getFramecount()))
     md_session = libnetmd.MDSession(md_iface, EKBopensource())
 
     (track, uuid, ccid) = md_session.downloadtrack(trk)
