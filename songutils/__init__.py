@@ -1,1 +1,2 @@
-from tag import readTag
+from id3reader import *
+from transcoder import transcode
