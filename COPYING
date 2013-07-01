@@ -1,0 +1,7 @@
+The main program (contained within netmd.py), and the conversion utilities in songutils/, with the exception of songutils/id3reader.py, are licensed under GPLv3 or any later version of the GPL, found in COPYING_netmd_py.
+
+songutils/id3reader.py is public domain.
+
+The library and glue components (libnetmd) are licensed under the GNU LGPL v2.1, found in COPYING_libnetmd.
+
+
