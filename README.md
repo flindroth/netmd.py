@@ -10,6 +10,10 @@ Example invocation
     $ ./netmd.py -f file.mp3
 
 This command will transcode the song contained in file.mp3 to 16-bit PCM (big endian), extract its ID3 artist/title information, and transfer it to the first connected NetMD device it can find.
+ 
+    $ ./netmd.py -h
+
+Show help.
 
 What is left to do?
 -------------------
